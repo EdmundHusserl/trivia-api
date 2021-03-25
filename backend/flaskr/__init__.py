@@ -44,7 +44,7 @@ def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
-    CORS(app, resources={r"*/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
   
     @app.after_request
     def after_request(response):
@@ -53,12 +53,14 @@ def create_app(test_config=None):
         return response
 
     def paginate(results: Iterable, start_at: int) -> List[object]:
-        end = start_at + QUESTIONS_PER_PAGE
-        return results[start_at:end]
+        start = (start_at - 1) * QUESTIONS_PER_PAGE
+        end = start + QUESTIONS_PER_PAGE
+        return results[start:end]
     
     
     @app.route("/api/v1/categories")
     def get_categories() -> List[dict]:
+        #import pdb; pdb.set_trace()
         try:
             categories: List[Category] = paginate(
                 results=Category.query.all(),
