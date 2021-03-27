@@ -96,7 +96,7 @@ def create_app(test_config=None):
     @app.route("/api/v1/questions", methods=["GET", "POST"])
     def get_post_questions() -> List[dict]:
         try:
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             if request.method == "GET":
                 questions: List[Question] = paginate(
                     results=Question.query.all(),
