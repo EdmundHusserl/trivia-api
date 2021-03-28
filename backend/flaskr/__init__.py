@@ -22,7 +22,7 @@ from typing import (
 )
 from dataclasses import dataclass
 import logging
-from ..models import setup_db, Question, Category
+from .models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 METHOD_NOT_ALLOWED: str = "You cannot use this endpoint to perform a {method} request."
