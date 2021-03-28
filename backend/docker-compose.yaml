@@ -6,7 +6,29 @@ services:
     environment:
       POSTGRES_USER: jorgepl
       POSTGRES_PASSWORD: admin
+      POSTGRES_DB: trivia_test
     ports:
       - 5677:5432
     volumes: 
-      - ./scripts:/scripts
+      - ./scripts:/docker-entrypoint-initdb.d
+    networks:
+      - myapi
+
+  backend:
+    container_name: flaskr
+    build:
+      context: ./
+      dockerfile: ./flaskr/Dockerfile
+    environment:
+      FLASK_APP: flaskr
+      FLASK_ENV: development
+      PYTHONPATH: "/app"
+    ports:
+      - 5000:5000
+    networks:
+      - myapi
+    depends_on:
+      - db
+
+networks:
+  myapi:
