@@ -14,7 +14,7 @@ services:
     networks:
       - myapi
 
-  backend:
+  flask_api:
     container_name: flaskr
     build:
       context: ./
