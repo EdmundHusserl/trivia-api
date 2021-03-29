@@ -11,6 +11,8 @@ from requests import (
 from flaskr import create_app
 from models import setup_db, Question, Category
 
+BASE_URL = "http://flask_api:5000"
+
 
 class TriviaTestCase(unittest.TestCase):
     """This class represents the trivia test case"""
@@ -24,7 +26,6 @@ class TriviaTestCase(unittest.TestCase):
                                                                "admin",
                                                                "psql_db:5432", 
                                                                self.database_name)
-        self.base_url = "http://flaskr:5000"
         
         setup_db(self.app, self.database_path)
 
@@ -45,7 +46,7 @@ class TriviaTestCase(unittest.TestCase):
     """
     def test_get_categories(self):
     
-        res = get(f"{self.base_url}/api/v1/categories")
+        res = get(f"{BASE_URL}/api/v1/categories")
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), list)
@@ -59,7 +60,7 @@ class TriviaTestCase(unittest.TestCase):
             )
 
     def test_categories_method_not_allowed(self):
-        res = put(f"{self.base_url}/api/v1/categories")
+        res = put(f"{BASE_URL}/api/v1/categories")
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 405)
         self.assertIsInstance(res.json(), dict)
