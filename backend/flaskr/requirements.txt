@@ -4,6 +4,14 @@
 #
 #    pip-compile ./flaskr/requirements.txt
 #
+certifi==2020.12.5
+    # via
+    #   -r ./flaskr/requirements.txt
+    #   requests
+chardet==4.0.0
+    # via
+    #   -r ./flaskr/requirements.txt
+    #   requests
 click==7.1.2
     # via
     #   -r ./flaskr/requirements.txt
@@ -26,6 +34,10 @@ greenlet==1.0.0
     # via
     #   -r ./flaskr/requirements.txt
     #   sqlalchemy
+idna==2.10
+    # via
+    #   -r ./flaskr/requirements.txt
+    #   requests
 itsdangerous==1.1.0
     # via
     #   -r ./flaskr/requirements.txt
@@ -58,6 +70,8 @@ pyflakes==2.3.1
     # via
     #   -r ./flaskr/requirements.txt
     #   flake8
+requests==2.25.1
+    # via -r ./flaskr/requirements.txt
 six==1.15.0
     # via
     #   -r ./flaskr/requirements.txt
@@ -70,6 +84,10 @@ toml==0.10.2
     # via
     #   -r ./flaskr/requirements.txt
     #   pep517
+urllib3==1.26.4
+    # via
+    #   -r ./flaskr/requirements.txt
+    #   requests
 werkzeug==1.0.1
     # via
     #   -r ./flaskr/requirements.txt
