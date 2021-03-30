@@ -1,20 +1,16 @@
-import os
 from flask import (
     Flask, 
     request, 
     abort, 
     jsonify
 )
-#from flask_sqlalchemy.utils import parse_version
 from werkzeug.exceptions import (
     BadRequest,
     MethodNotAllowed,
     NotFound,
     UnprocessableEntity
 )
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-import random
 from typing import (
     Iterable,
     List,
@@ -27,6 +23,7 @@ from .models import setup_db, Question, Category
 QUESTIONS_PER_PAGE = 10
 METHOD_NOT_ALLOWED: str = "You cannot use this endpoint to perform a {method} request."
 MSG_UNPROCESSABLE: str = "Make sur that {params} are not null."
+
 
 @dataclass(frozen=True)
 class QuestionPayload:
@@ -45,7 +42,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     setup_db(app)
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-  
+
     @app.after_request
     def after_request(response):
         response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
@@ -56,11 +53,9 @@ def create_app(test_config=None):
         start = (start_at - 1) * QUESTIONS_PER_PAGE
         end = start + QUESTIONS_PER_PAGE
         return results[start:end]
-    
-    
+
     @app.route("/api/v1/categories")
     def get_categories() -> List[dict]:
-        #import pdb; pdb.set_trace()
         try:
             categories: List[Category] = paginate(
                 results=Category.query.all(),
@@ -96,7 +91,6 @@ def create_app(test_config=None):
     @app.route("/api/v1/questions", methods=["GET", "POST"])
     def get_post_questions() -> List[dict]:
         try:
-            #import pdb; pdb.set_trace()
             if request.method == "GET":
                 questions: List[Question] = paginate(
                     results=Question.query.all(),
@@ -132,24 +126,8 @@ def create_app(test_config=None):
         else:
             abort(500)
 
-
-    """
-    TEST: At this point, when you start the application
-    you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
-    Clicking on the page numbers should update the questions. 
-    """
-
-    
-    '''
-    @TODO: 
-    Create an endpoint to DELETE question using a question ID. 
-
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page. 
-    '''
     @app.route("/api/v1/questions/<int:id>", methods=["GET", "DELETE"])
-    def delete_question(id: int) -> dict:
+    def get_delete_question(id: int) -> dict:
 
         try:
             question = Question.query.get(id)    
@@ -162,35 +140,21 @@ def create_app(test_config=None):
 
             if request.method == "DELETE":
                 question.delete()
-                return jsonify({}), 204 
+                return jsonify({}), 204
 
         except NotFound:
             abort(404)
         else:
             abort(500)
 
-
-    """
-    @TODO: 
-    Create an endpoint to POST a new question, 
-    which will require the question and answer text, 
-    category, and difficulty score.
-    """
-    
-    """
-    TEST: When you submit a question on the "Add" tab, 
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.  
-    """
-
-    """
-    @TODO: 
-    Create a POST endpoint to get questions based on a search term. 
-    It should return any questions for whom the search term 
-    is a substring of the question. 
-    """
     @app.route("/api/v1/questions/search-term", methods=["POST"])
     def get_questions_using_search_term() -> List[dict]:
+        """
+            #TODO
+            TEST: Search by any phrase. The questions list will update to include 
+            only question that include that string within their question. 
+            Try using the word "title" to start. 
+        """
         try:
             search_term = request.form.get("search_term")
             if search_term is None:
@@ -209,18 +173,6 @@ def create_app(test_config=None):
         else:
             abort(500)
 
-        
-
-    """
-    TEST: Search by any phrase. The questions list will update to include 
-    only question that include that string within their question. 
-    Try using the word "title" to start. 
-    """
-
-    """
-    @TODO: 
-    Create a GET endpoint to get questions based on category. 
-    """
     @app.route("/api/v1/categories/<int:cat_id>/questions", methods=["GET"])
     def get_questions_by_category(cat_id: int) -> List[dict]:
         try:
@@ -236,21 +188,19 @@ def create_app(test_config=None):
         else:
             abort(500)
 
-    """
-    TEST: In the "List" tab / main screen, clicking on one of the 
-    categories in the left column will cause only questions of that 
-    category to be shown. 
-    """
-
-    """
-    @TODO: 
-    Create a POST endpoint to get questions to play the quiz. 
-    This endpoint should take category and previous question parameters 
-    and return a random questions within the given category, 
-    if provided, and that is not one of the previous questions. 
-    """
     @app.route("/api/v1/questions/play", methods=["POST"])
     def get_questions_play():
+        """
+            #TODO: Integration tests
+            TEST: In the "List" tab / main screen, clicking on one of the 
+            categories in the left column will cause only questions of that 
+            category to be shown. 
+
+            #TODO: Integration tests
+            TEST: In the "Play" tab, after a user selects "All" or a category,
+            one question at a time is displayed, the user is allowed to answer
+            and shown whether they were correct or not. 
+        """
         try:
             from random import randint
             body = request.get_json()
@@ -271,7 +221,8 @@ def create_app(test_config=None):
             random_q_excluding_previous = [el for el in filter(lambda x: x.id != int(previous_question),
                                                                possible_questions)]
             return random_q_excluding_previous[
-                randint(0, len(random_q_excluding_previous))].format()
+                randint(0, len(random_q_excluding_previous) - 1)
+            ].format() if len(random_q_excluding_previous) else {}
 
         except UnprocessableEntity as e:
             abort(422, e.args[0] if len(e.args) else None)
@@ -280,17 +231,6 @@ def create_app(test_config=None):
         else:
             abort(500)
 
-    """
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not. 
-    """
-
-    """
-    @TODO: 
-    Create error handlers for all expected errors 
-    including 404 and 422. 
-    """
     @app.errorhandler(405)
     def method_not_allowed(error):
         BASIC_MSG = "Method not allowed."
@@ -327,3 +267,11 @@ def create_app(test_config=None):
         }), 422
     
     return app
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            "status": 400,
+            "success": False,
+            "message": error.description if error.description else "Bad request" 
+        }), 400
