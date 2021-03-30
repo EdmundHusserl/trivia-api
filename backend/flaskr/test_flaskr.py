@@ -19,8 +19,7 @@ BASE_URL = "http://flask_api:5000"
 BODY = {
     "question": "Was Maradona better than Messi?",
     "category": "6",
-    "answer": """Yes, since Maradona managed to win the World Cup once, 
-                        whereas Messi hasn't reached that level yet.""",
+    "answer": "Yes, since Maradona managed to win the World Cup once, whereas Messi hasn't yet.",
     "difficulty": "7"
 }
 
@@ -90,7 +89,7 @@ class TriviaTestCase(TestCase):
                                ["status", "success", "message"])],
             ["status", "success", "message"]
         )
-        self.assertEqual(res.json.get("status"), 405)
+        self.assertEqual(res.json().get("status"), 405)
                     
     @mock.patch("flaskr.Category.query.all", side_effect=InternalServerError())
     def test_categories_internal_server_error(self, mock_output):
@@ -102,7 +101,7 @@ class TriviaTestCase(TestCase):
         """
         responses = list()
         responses.append(get(f"{BASE_URL}/api/v1/categories")) 
-        responses.append(get("f{BASE_URL}/api/v1/categories/1"))
+        responses.append(get(f"{BASE_URL}/api/v1/categories/1"))
         
         for res in responses:
             self.assertEqual(res.ok, False)
@@ -183,7 +182,7 @@ class TriviaTestCase(TestCase):
             self.assertIsInstance(el.get("question"), str)
             self.assertIsInstance(el.get("answer"), str)
             self.assertIsInstance(el.get("category"), int)
-            self.assertIsInstance(el.get("difficulty", int))
+            self.assertIsInstance(el.get("difficulty"), int)
 
     def tests_get_questions_method_not_allowed(self):
         """
@@ -199,7 +198,7 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.json().get("status"), 405)
 
     @mock.patch("flaskr.Question.query.all", side_effect=InternalServerError())
-    def test_post_question_internal_server_error(self):
+    def test_post_question_internal_server_error(self, mock_output):
         """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions endpoint with the POST method,
@@ -219,7 +218,7 @@ class TriviaTestCase(TestCase):
             And a properly constructed payload is used,
             Then I get a 200 response in json format.
         """
-        res = post(f"{BASE_URL}/api/v1/questions", data=BODY)
+        res = post(f"{BASE_URL}/api/v1/questions", json=BODY)
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 201)
         self.assertIsInstance(res.json(), dict)
@@ -245,7 +244,7 @@ class TriviaTestCase(TestCase):
         """
         truncated_body: dict = BODY
         truncated_body.pop("difficulty")
-        res = post(f"{BASE_URL}/api/v1/questions", data=truncated_body)
+        res = post(f"{BASE_URL}/api/v1/questions", json=truncated_body)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
         self.assertIsInstance(res.json(), dict)
@@ -273,7 +272,7 @@ class TriviaTestCase(TestCase):
         for res in responses:
             self.assertEqual(res.ok, False)
             self.assertEqual(res.status_code, 404)
-            self.assertEqual(res.json(), dict)
+            self.assertIsInstance(res.json(), dict)
             self.assertEqual(res.json.get("status"), 404)
 
     def test_delete_question_success(self):
@@ -283,13 +282,13 @@ class TriviaTestCase(TestCase):
             And an EXISTENT ID is used,
             Then I get a 204 response in json format.
         """
-        res = post(f"{BASE_URL}/api/v1/questions", data=BODY)
+        res = post(f"{BASE_URL}/api/v1/questions", json=BODY)
         new_id = res.json().get("id")
         res = delete(f"{BASE_URL}/api/v1/questions/{new_id}") 
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 204)
 
-    @mock.patch("flaskr.form.get", side_effect=InternalServerError())
+    @mock.patch("flaskr.Question.query.all", side_effect=InternalServerError())
     def test_get_q_using_search_term_failure(self, mock_output):
         """
             Given a psql instance and a flask app both up and running,
@@ -308,7 +307,7 @@ class TriviaTestCase(TestCase):
         """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions endpoint with the POST method,
-            But a ill-constructed payload is used (i.e., data=None),
+            But a ill-constructed payload is used (i.e., json=None),
             Then I get a 400 response in json format.
         """
         res = post(f"{BASE_URL}/api/v1/questions/search-term") 
@@ -326,24 +325,25 @@ class TriviaTestCase(TestCase):
             Then I get a 200 response in json format.
         """
         search_term = {"search_term": "Maradona"} 
-        res = post(f"{BASE_URL}/api/v1/questions/search-term", data=search_term) 
+        res = post(f"{BASE_URL}/api/v1/questions/search-term", json=search_term) 
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), list)
         
         # I want to make sur that the resource returned presents the following fields:
         # id, question, category, answer, difficulty.
-        if len(res.json()):
+        for el in res.json():
             self.assertEqual(
-                [el for el in filter(lambda k: k is res.json().keys(), ["id",
-                                                                        "question",
-                                                                        "category",
-                                                                        "answer",
-                                                                        "difficulty"])],
+                [el for el in filter(lambda k: k in ["id",
+                                                     "question",
+                                                     "category",
+                                                     "answer",
+                                                     "difficulty"],
+                                     el.keys())],
                 ["id", "question", "category", "answer", "difficulty"]
             )
     
-    @mock.patch("flaskr.request.get_json", side_effect=InternalServerError())
+    @mock.patch("flaskr.Question.query.all", side_effect=InternalServerError())
     def test_get_question_play_failure(self):
         """
             Given a psql instance and a flask app both up and running,
@@ -365,7 +365,7 @@ class TriviaTestCase(TestCase):
             Then I get a 200 response in json format.
         """
         payload = {"previous_question": 19, "category": 2}
-        res = post(f"{BASE_URL}/api/v1/questions/play", data=payload)
+        res = post(f"{BASE_URL}/api/v1/questions/play", json=payload)
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), dict)
@@ -390,8 +390,8 @@ class TriviaTestCase(TestCase):
                 (i.e., a payload lacking one of the required fields),
             Then I get a 422 response in json format.
         """
-        payload = {"previous_question": 19}
-        res = post(f"{BASE_URL}/api/v1/questions/play", data=payload)
+        payload = {"previous_question": 19, "category": None}
+        res = post(f"{BASE_URL}/api/v1/questions/play", json=payload)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
         self.assertIsInstance(res.json(), dict)
@@ -406,7 +406,7 @@ class TriviaTestCase(TestCase):
         """
         NON_EXISTENT_CAT: int = 6 ** 7
         payload = {"previous_question": 19, "category": NON_EXISTENT_CAT}
-        res = post(f"{BASE_URL}/api/v1/questions/play", data=payload)
+        res = post(f"{BASE_URL}/api/v1/questions/play", json=payload)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 404)
         self.assertIsInstance(res.json(), dict)
