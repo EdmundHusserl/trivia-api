@@ -1,0 +1,1 @@
+docker exec -it flaskr coverage run --source=./flaskr -m unittest discover ./flaskr  
