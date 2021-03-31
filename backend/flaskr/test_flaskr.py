@@ -1,5 +1,4 @@
 from unittest import (
-    mock,
     TestCase, 
     main
 )
@@ -12,15 +11,15 @@ from requests import (
 )
 from flaskr import create_app
 from models import setup_db
-from werkzeug.exceptions import InternalServerError
 from typing import List
 
+QUESTION_KEYS = ["id", "question", "answer", "difficulty", "category"]
 BASE_URL = "http://flask_api:5000"
 BODY = {
     "question": "Was Maradona better than Messi?",
-    "category": "6",
+    "category": 6,
     "answer": "Yes, since Maradona managed to win the World Cup once, whereas Messi hasn't yet.",
-    "difficulty": "7"
+    "difficulty": 7
 }
 
 
@@ -91,29 +90,6 @@ class TriviaTestCase(TestCase):
         )
         self.assertEqual(res.json().get("status"), 405)
                     
-    @mock.patch("flaskr.Category.query.all", side_effect=InternalServerError())
-    def test_categories_internal_server_error(self, mock_output):
-        """
-            Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/categories endpoint with the GET method, 
-            But a server-side occurs,
-            Then I get a 500 response in json format.
-        """
-        responses = list()
-        responses.append(get(f"{BASE_URL}/api/v1/categories")) 
-        responses.append(get(f"{BASE_URL}/api/v1/categories/1"))
-        
-        for res in responses:
-            self.assertEqual(res.ok, False)
-            self.assertEqual(res.status_code, 500)
-            self.assertIsInstance(res.json(), dict)
-            self.assertEqual(
-                [k for k in filter(lambda k: k in res.json(), 
-                                   ["status", "success", "message"])],
-                ["status", "success", "message"]
-            )
-            self.assertEqual(res.json().get("status"), 500)
-    
     def test_get_category_by_id_success(self):
         """
             Given a psql instance and a flask app both up and running,
@@ -170,14 +146,7 @@ class TriviaTestCase(TestCase):
         # Verifying data complies to specs 
         for el in res.json():
             self.assertIsInstance(el, dict)
-            self.assertEqual(
-                [key for key in filter(lambda k: k in el.keys(), ["id",
-                                                                  "question", 
-                                                                  "answer",
-                                                                  "category",
-                                                                  "difficulty"])],
-                ["id", "question", "answer", "category", "difficulty"]
-            )
+            [self.assertTrue(el.keys().__contains__(k)) for k in QUESTION_KEYS]
             self.assertIsInstance(el.get("id"), int)
             self.assertIsInstance(el.get("question"), str)
             self.assertIsInstance(el.get("answer"), str)
@@ -197,20 +166,6 @@ class TriviaTestCase(TestCase):
         self.assertIsInstance(res.json(), dict)
         self.assertEqual(res.json().get("status"), 405)
 
-    @mock.patch("flaskr.Question.query.all", side_effect=InternalServerError())
-    def test_post_question_internal_server_error(self, mock_output):
-        """
-            Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions endpoint with the POST method,
-            But a server-side error occurs,
-            Then I get a 200 response in json format.
-        """
-        res = get(f"{BASE_URL}/api/v1/questions")
-        self.assertEqual(res.ok, False)
-        self.assertEqual(res.status_code, 500)
-        self.assertIsInstance(res.json(), dict)
-        self.assertEqual(res.json().get("status"), 500)
-
     def test_post_question(self):
         """
             Given a psql instance and a flask app both up and running,
@@ -222,18 +177,11 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 201)
         self.assertIsInstance(res.json(), dict)
-        self.assertEqual(
-            [el for el in filter(lambda k: k is res.json().keys(), ["id",
-                                                                    "question",
-                                                                    "category",
-                                                                    "answer",
-                                                                    "difficulty"])],
-            ["id", "question", "category", "answer", "difficulty"]
-        )
+        [self.assertTrue(res.json().keys().__contains__(k)) for k in QUESTION_KEYS]
         self.assertEqual(res.json().get("question"), BODY.get("question"))
         self.assertEqual(res.json().get("answer"), BODY.get("answer"))
-        self.assertEqual(int(res.json().get("category")), BODY.get("category"))
-        self.assertEqual(int(res.json().get("difficulty")), BODY.get("difficulty"))
+        self.assertEqual(res.json().get("category"), BODY.get("category"))
+        self.assertEqual(res.json().get("difficulty"), BODY.get("difficulty"))
 
     def test_post_question_unprocessable(self):
         """
@@ -242,13 +190,14 @@ class TriviaTestCase(TestCase):
             But a ill-constructed payload is used,
             Then I get a 422 response in json format.
         """
-        truncated_body: dict = BODY
-        truncated_body.pop("difficulty")
-        res = post(f"{BASE_URL}/api/v1/questions", json=truncated_body)
+        
+        modified_body: dict = BODY
+        modified_body["difficulty"] = None
+        res = post(f"{BASE_URL}/api/v1/questions", json=modified_body)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
         self.assertIsInstance(res.json(), dict)
-        self.assertEqual(res.json.get("status"), 422)        
+        self.assertEqual(res.json().get("status"), 422)        
 
     def test_get_delete_question_by_id_failure(self):
         """
@@ -273,7 +222,7 @@ class TriviaTestCase(TestCase):
             self.assertEqual(res.ok, False)
             self.assertEqual(res.status_code, 404)
             self.assertIsInstance(res.json(), dict)
-            self.assertEqual(res.json.get("status"), 404)
+            self.assertEqual(res.json().get("status"), 404)
 
     def test_delete_question_success(self):
         """ 
@@ -285,31 +234,17 @@ class TriviaTestCase(TestCase):
         res = post(f"{BASE_URL}/api/v1/questions", json=BODY)
         new_id = res.json().get("id")
         res = delete(f"{BASE_URL}/api/v1/questions/{new_id}") 
-        self.assertEqual(res.ok, False)
+        self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 204)
-
-    @mock.patch("flaskr.Question.query.all", side_effect=InternalServerError())
-    def test_get_q_using_search_term_failure(self, mock_output):
-        """
-            Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions/search-term endpoint 
-                with the POST method,
-            But server-side error occurs,
-            Then I get a 500 response in json format.
-        """
-        res = post(f"{BASE_URL}/api/v1/questions/search-term") 
-        self.assertEqual(res.ok, False)
-        self.assertEqual(res.status_code, 500)
-        self.assertIsInstance(res.json(), dict)
-        self.assertEqual(res.json().get("status"), 500)
 
     def test_get_q_using_search_term_bad_request(self):
         """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions endpoint with the POST method,
             But a ill-constructed payload is used (i.e., json=None),
-            Then I get a 400 response in json format.
+            Then I get a 500 response in json format.
         """
+        #
         res = post(f"{BASE_URL}/api/v1/questions/search-term") 
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 400)
@@ -333,29 +268,21 @@ class TriviaTestCase(TestCase):
         # I want to make sur that the resource returned presents the following fields:
         # id, question, category, answer, difficulty.
         for el in res.json():
-            self.assertEqual(
-                [el for el in filter(lambda k: k in ["id",
-                                                     "question",
-                                                     "category",
-                                                     "answer",
-                                                     "difficulty"],
-                                     el.keys())],
-                ["id", "question", "category", "answer", "difficulty"]
-            )
-    
-    @mock.patch("flaskr.Question.query.all", side_effect=InternalServerError())
-    def test_get_question_play_failure(self):
+            [self.assertTrue(el.keys().__contains__(k)) for k in QUESTION_KEYS]
+                
+    def test_get_question_play_method_not_allowed(self):
         """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions/play endpoint,
             But a server-side error takes place,
             Then a 500 response is returned in json format.
         """
+        
         res = get(f"{BASE_URL}/api/v1/questions/play")
         self.assertEqual(res.ok, False)
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 405)
         self.assertIsInstance(res.json(), dict)
-        self.assertEqual(res.json().get("status"), 500)
+        self.assertEqual(res.json().get("status"), 405)
    
     def test_get_question_play(self):
         """
@@ -372,15 +299,8 @@ class TriviaTestCase(TestCase):
 
         # I want to make sure that the returned resource presents the following
         # fields: id, question, category, answer, difficulty.
-        if len(res.json().keys()):
-            self.assertEqual(
-                [el for el in filter(lambda k: k is res.json().keys(), ["id",
-                                                                        "question",
-                                                                        "category",
-                                                                        "answer",
-                                                                        "difficulty"])],
-                ["id", "question", "category", "answer", "difficulty"]
-            )
+        
+        [self.assertTrue(res.json().keys().__contains__(el)) for el in QUESTION_KEYS]
 
     def test_get_question_play_unprocessable_payload(self):
         """ 
@@ -395,7 +315,7 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
         self.assertIsInstance(res.json(), dict)
-        self.assertIsInstance(res.json().get("status"), 422) 
+        self.assertEqual(res.json().get("status"), 422) 
 
     def test_get_question_play_w_non_existent_cat(self):
         """
