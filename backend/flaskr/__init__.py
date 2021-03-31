@@ -34,7 +34,13 @@ class QuestionPayload:
 
     def get_null_fields(self) -> List[str]:
         problematic_keys = filter(lambda k: k[1] is None, self.__dict__.items())
-        return [el for el in problematic_keys]        
+        return [el[0] for el in problematic_keys]        
+
+
+def paginate(results: Iterable, start_at: int) -> List[object]:
+    start = (start_at - 1) * QUESTIONS_PER_PAGE
+    end = start + QUESTIONS_PER_PAGE
+    return results[start:end]
 
 
 def create_app(test_config=None):
@@ -48,11 +54,6 @@ def create_app(test_config=None):
         response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
         response.headers.add("Access-Control-Allow-Methods", "GET,POST,DELETE")
         return response
-
-    def paginate(results: Iterable, start_at: int) -> List[object]:
-        start = (start_at - 1) * QUESTIONS_PER_PAGE
-        end = start + QUESTIONS_PER_PAGE
-        return results[start:end]
 
     @app.route("/api/v1/categories")
     def get_categories() -> List[dict]:
@@ -106,8 +107,9 @@ def create_app(test_config=None):
                                           req_body.get("difficulty"))
                            
                 undefined_properties = payload.get_null_fields()
+                
                 if undefined_properties:
-                    UnprocessableEntity(
+                    raise UnprocessableEntity(
                         MSG_UNPROCESSABLE.format(params=" - ".join(undefined_properties))
                     )
                 question = Question(question=payload.question,
@@ -156,7 +158,9 @@ def create_app(test_config=None):
             Try using the word "title" to start. 
         """
         try:
-            search_term = request.form.get("search_term")
+            payload = request.get_json()
+            search_term = payload.get("search_term") if payload is not None else None
+            logging.debug(f"search_term={search_term}")
             if search_term is None:
                 raise BadRequest()
             
@@ -201,8 +205,8 @@ def create_app(test_config=None):
             one question at a time is displayed, the user is allowed to answer
             and shown whether they were correct or not. 
         """
+        from random import randint
         try:
-            from random import randint
             body = request.get_json()
             category = body.get("category")
             previous_question = body.get("previous_question")
@@ -220,11 +224,14 @@ def create_app(test_config=None):
             
             random_q_excluding_previous = [el for el in filter(lambda x: x.id != int(previous_question),
                                                                possible_questions)]
-            return random_q_excluding_previous[
-                randint(0, len(random_q_excluding_previous) - 1)
-            ].format() if len(random_q_excluding_previous) else {}
+            if not len(random_q_excluding_previous):
+                return {}
+            
+            idx: int = randint(0, len(random_q_excluding_previous) - 1) 
+            return random_q_excluding_previous[idx].format() 
 
         except UnprocessableEntity as e:
+            logging.warning(e.args)
             abort(422, e.args[0] if len(e.args) else None)
         except NotFound as e:
             abort(404, e.args[0] if len(e.args) else None)
@@ -266,8 +273,6 @@ def create_app(test_config=None):
             "message": "payload is unprocessable."
         }), 422
     
-    return app
-
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({
@@ -275,3 +280,7 @@ def create_app(test_config=None):
             "success": False,
             "message": error.description if error.description else "Bad request" 
         }), 400
+    
+    return app
+
+    
