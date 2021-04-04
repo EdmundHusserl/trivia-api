@@ -10,14 +10,15 @@ services:
     ports:
       - 5677:5432
     volumes: 
-      - ./scripts:/docker-entrypoint-initdb.d
+      - ./backend/scripts:/docker-entrypoint-initdb.d
     networks:
-      - myapi
+      myapi:
+        ipv4_address: "172.25.0.2"
 
   flask_api:
     container_name: flaskr
     build:
-      context: ./
+      context: ./backend
       dockerfile: ./flaskr/Dockerfile
     environment:
       FLASK_APP: flaskr
@@ -26,9 +27,27 @@ services:
     ports:
       - 5000:5000
     networks:
-      - myapi
+      myapi:
+        ipv4_address: "172.25.0.3"
     depends_on:
       - db
 
+  react-app: 
+    container_name: trivia-frontend
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:3000
+    networks:
+      - myapi
+    depends_on:
+      - flask_api
+
 networks:
   myapi:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/24
+
