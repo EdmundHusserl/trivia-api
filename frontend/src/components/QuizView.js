@@ -5,6 +5,8 @@ import '../stylesheets/QuizView.css';
 
 const questionsPerPlay = 5; 
 
+const API_URL = "http://172.25.0.3:5000";
+
 class QuizView extends Component {
   constructor(props){
     super();
@@ -22,10 +24,10 @@ class QuizView extends Component {
 
   componentDidMount(){
     $.ajax({
-      url: `/categories`, //TODO: update request URL
+      url: `${API_URL}/api/v1/categories`, //TODO: update request URL
       type: "GET",
       success: (result) => {
-        this.setState({ categories: result.categories })
+        this.setState({ categories: result })
         return;
       },
       error: (error) => {
@@ -48,7 +50,7 @@ class QuizView extends Component {
     if(this.state.currentQuestion.id) { previousQuestions.push(this.state.currentQuestion.id) }
 
     $.ajax({
-      url: '/quizzes', //TODO: update request URL
+      url: `${API_URL}/api/v1/quizzes`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',

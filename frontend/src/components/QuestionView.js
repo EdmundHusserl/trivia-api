@@ -5,6 +5,8 @@ import Question from './Question';
 import Search from './Search';
 import $ from 'jquery';
 
+const API_URL = "http://172.25.0.3:5000"
+
 class QuestionView extends Component {
   constructor(){
     super();
@@ -23,14 +25,15 @@ class QuestionView extends Component {
 
   getQuestions = () => {
     $.ajax({
-      url: `/questions?page=${this.state.page}`, //TODO: update request URL
+      url: `${API_URL}/api/v1/questions?page=${this.state.page}`, //TODO: update request URL
       type: "GET",
       success: (result) => {
-        this.setState({
-          questions: result.questions,
-          totalQuestions: result.total_questions,
-          categories: result.categories,
-          currentCategory: result.current_category })
+        const len = result.length;
+        this.setState(prev, {
+          questions: result,
+          totalQuestions: len,
+          categories: [...new Set(result.map(el => el.category))],
+          currentCategory: len ? result[0].category : prev.currentCategory })
         return;
       },
       error: (error) => {
@@ -60,13 +63,14 @@ class QuestionView extends Component {
 
   getByCategory= (id) => {
     $.ajax({
-      url: `/categories/${id}/questions`, //TODO: update request URL
+      url: `${API_URL}/api/v1/categories/${id}/questions`, //TODO: update request URL
       type: "GET",
       success: (result) => {
-        this.setState({
-          questions: result.questions,
-          totalQuestions: result.total_questions,
-          currentCategory: result.current_category })
+        const len = result.length;
+        this.setState(prev, {
+          questions: result,
+          totalQuestions: len,
+          currentCategory: len ? result[0].category : prev.currentCategory })
         return;
       },
       error: (error) => {
@@ -78,7 +82,7 @@ class QuestionView extends Component {
 
   submitSearch = (searchTerm) => {
     $.ajax({
-      url: `/questions`, //TODO: update request URL
+      url: `${API_URL}/api/v1/questions`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
@@ -88,10 +92,10 @@ class QuestionView extends Component {
       },
       crossDomain: true,
       success: (result) => {
-        this.setState({
-          questions: result.questions,
-          totalQuestions: result.total_questions,
-          currentCategory: result.current_category })
+        this.setState(prev, {
+          questions: result,
+          totalQuestions: result.length,
+          currentCategory: result.length ? result[0].category : prev.currentCategory })
         return;
       },
       error: (error) => {
@@ -105,7 +109,7 @@ class QuestionView extends Component {
     if(action === 'DELETE') {
       if(window.confirm('are you sure you want to delete the question?')) {
         $.ajax({
-          url: `/questions/${id}`, //TODO: update request URL
+          url: `${API_URL}/api/v1/questions/${id}`, //TODO: update request URL
           type: "DELETE",
           success: (result) => {
             this.getQuestions();
