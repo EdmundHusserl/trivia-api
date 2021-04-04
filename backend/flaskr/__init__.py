@@ -192,8 +192,8 @@ def create_app(test_config=None):
         else:
             abort(500)
 
-    @app.route("/api/v1/questions/play", methods=["POST"])
-    def get_questions_play():
+    @app.route("/api/v1/questions/quizzes", methods=["POST"])
+    def post_quizzes_questions():
         """
             #TODO: Integration tests
             TEST: In the "List" tab / main screen, clicking on one of the 
@@ -208,8 +208,8 @@ def create_app(test_config=None):
         from random import randint
         try:
             body = request.get_json()
-            category = body.get("category")
-            previous_question = body.get("previous_question")
+            category = body.get("quiz_category")
+            previous_question = body.get("previous_questions")
             
             if category is None or previous_question is None:
                 raise UnprocessableEntity(MSG_UNPROCESSABLE.format(
