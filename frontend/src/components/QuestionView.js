@@ -4,8 +4,7 @@ import '../stylesheets/App.css';
 import Question from './Question';
 import Search from './Search';
 import $ from 'jquery';
-
-const API_URL = "http://172.25.0.3:5000"
+import { apiUrl } from './config';
 
 class QuestionView extends Component {
   constructor(){
@@ -23,17 +22,43 @@ class QuestionView extends Component {
     this.getQuestions();
   }
 
-  getQuestions = () => {
+  getCategoryType = (id) => {
     $.ajax({
-      url: `${API_URL}/api/v1/questions?page=${this.state.page}`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/categories/${id}`,
       type: "GET",
       success: (result) => {
-        const len = result.length;
-        this.setState(prev, {
-          questions: result,
-          totalQuestions: len,
-          categories: [...new Set(result.map(el => el.category))],
-          currentCategory: len ? result[0].category : prev.currentCategory })
+        console.log(result)
+        this.setState({currentType: result.type})
+        return;
+      },
+      error: (error) => {
+          alert('Unable to load questions. Please try your request again')
+          return;  
+      }
+    })
+  }
+  getQuestions = () => {
+    $.ajax({
+      url: `${apiUrl}/api/v1/questions?page=${this.state.page}`, //TODO: update request URL
+      type: "GET",
+      success: (result) => {
+        this.setState( (prev) => {
+          const categories = {};
+          result.forEach(question => {
+            this.getCategoryType(question.category);
+            console.log(`currentType: ${this.state.categoryType}`);
+            categories[question.category] = this.state.categoryType;
+          })
+          console.log(categories);
+          return { 
+            questions: result,
+            totalQuestions: result.length,
+            categories: categories,
+            currentCategory: (result[result.length -1] !== undefined) ? 
+              result[result.length - 1].category : prev.currentCategory 
+          }
+        })
+        console.log(this.state)
         return;
       },
       error: (error) => {
@@ -63,14 +88,17 @@ class QuestionView extends Component {
 
   getByCategory= (id) => {
     $.ajax({
-      url: `${API_URL}/api/v1/categories/${id}/questions`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/categories/${id}/questions`, //TODO: update request URL
       type: "GET",
       success: (result) => {
-        const len = result.length;
-        this.setState(prev, {
-          questions: result,
-          totalQuestions: len,
-          currentCategory: len ? result[0].category : prev.currentCategory })
+        this.setState( (prev) => {
+          return {  
+            questions: result,
+            totalQuestions: result.length,
+            currentCategory: (result.length > 0) ? id : prev.currentCategory
+          }
+        })
+        console.log(this.state)
         return;
       },
       error: (error) => {
@@ -82,20 +110,24 @@ class QuestionView extends Component {
 
   submitSearch = (searchTerm) => {
     $.ajax({
-      url: `${API_URL}/api/v1/questions`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/questions`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
-      data: JSON.stringify({searchTerm: searchTerm}),
+      data: JSON.stringify({search_term: searchTerm}),
       xhrFields: {
         withCredentials: true
       },
       crossDomain: true,
       success: (result) => {
-        this.setState(prev, {
-          questions: result,
-          totalQuestions: result.length,
-          currentCategory: result.length ? result[0].category : prev.currentCategory })
+        this.setState( (prev) => {
+          return {
+            questions: result,
+            totalQuestions: result.length,
+            currentCategory: (result[0] !== undefined) ? result[0].category : prev.currentCategory 
+          }
+        })
+        console.log(this.state);
         return;
       },
       error: (error) => {
@@ -109,7 +141,7 @@ class QuestionView extends Component {
     if(action === 'DELETE') {
       if(window.confirm('are you sure you want to delete the question?')) {
         $.ajax({
-          url: `${API_URL}/api/v1/questions/${id}`, //TODO: update request URL
+          url: `${apiUrl}/api/v1/questions/${id}`, //TODO: update request URL
           type: "DELETE",
           success: (result) => {
             this.getQuestions();

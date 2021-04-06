@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
-
 import '../stylesheets/QuizView.css';
+import { apiUrl } from './config';
 
 const questionsPerPlay = 5; 
 
-const API_URL = "http://172.25.0.3:5000";
 
 class QuizView extends Component {
   constructor(props){
@@ -24,10 +23,14 @@ class QuizView extends Component {
 
   componentDidMount(){
     $.ajax({
-      url: `${API_URL}/api/v1/categories`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/categories`, //TODO: update request URL
       type: "GET",
       success: (result) => {
-        this.setState({ categories: result })
+        const categories = {};
+        this.setState( () => {
+          result.map(el => categories[el.id] = el.type);
+          return {categories: categories}
+        })
         return;
       },
       error: (error) => {
@@ -50,7 +53,7 @@ class QuizView extends Component {
     if(this.state.currentQuestion.id) { previousQuestions.push(this.state.currentQuestion.id) }
 
     $.ajax({
-      url: `${API_URL}/api/v1/quizzes`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/quizzes`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',

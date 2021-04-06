@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
+import { apiUrl } from './config';
 
 import '../stylesheets/FormView.css';
 
-const API_URL = "http://172.25.0.3:5000"
-
 class FormView extends Component {
-  constructor(props){
+  constructor(props) {
     super();
     this.state = {
       question: "",
@@ -19,10 +18,17 @@ class FormView extends Component {
 
   componentDidMount(){
     $.ajax({
-      url: `${API_URL}/api/v1/categories`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/categories`, //TODO: update request URL
       type: "GET",
       success: (result) => {
-        this.setState({ categories: result })
+        this.setState( () => {
+          const categories = {};
+          result.forEach( (el) => { 
+            categories[el.id] = el.type
+          })
+          console.log(categories);
+          return {categories: categories}
+        })
         return;
       },
       error: (error) => {
@@ -36,7 +42,7 @@ class FormView extends Component {
   submitQuestion = (event) => {
     event.preventDefault();
     $.ajax({
-      url: `${API_URL}/api/v1/questions`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/questions`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
