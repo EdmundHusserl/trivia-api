@@ -270,29 +270,29 @@ class TriviaTestCase(TestCase):
         for el in res.json():
             [self.assertTrue(el.keys().__contains__(k)) for k in QUESTION_KEYS]
                 
-    def test_get_question_play_method_not_allowed(self):
+    def test_quizzes_method_not_allowed(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions/play endpoint,
+            When I hit the /api/v1/questions/quizzes endpoint,
             But a server-side error takes place,
-            Then a 500 response is returned in json format.
+            Then a 405 response is returned in json format.
         """
         
-        res = get(f"{BASE_URL}/api/v1/questions/play")
+        res = get(f"{BASE_URL}/api/v1/questions/quizzes")
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 405)
         self.assertIsInstance(res.json(), dict)
         self.assertEqual(res.json().get("status"), 405)
    
-    def test_get_question_play(self):
+    def test_quizzes_ok(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions/play endpoint with the POST method,
+            When I hit the /api/v1/questions/quizzes endpoint with the POST method,
             And a properly constructed payload
             Then I get a 200 response in json format.
         """
-        payload = {"previous_question": 19, "category": 2}
-        res = post(f"{BASE_URL}/api/v1/questions/play", json=payload)
+        payload = {"previous_questions": [19], "quiz_category": {"id": 2}}
+        res = post(f"{BASE_URL}/api/v1/questions/quizzes", json=payload)
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), dict)
@@ -302,31 +302,31 @@ class TriviaTestCase(TestCase):
         
         [self.assertTrue(res.json().keys().__contains__(el)) for el in QUESTION_KEYS]
 
-    def test_get_question_play_unprocessable_payload(self):
+    def test_quizzes_w_unprocessable_payload(self):
         """ 
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions/play endpoint with the POST method,
+            When I hit the /api/v1/questions/quizzes endpoint with the POST method,
             But ill-constructed payload is used 
                 (i.e., a payload lacking one of the required fields),
             Then I get a 422 response in json format.
         """
-        payload = {"previous_question": 19, "category": None}
-        res = post(f"{BASE_URL}/api/v1/questions/play", json=payload)
+        payload = {"previous_questions": [19], "quiz_category": None}
+        res = post(f"{BASE_URL}/api/v1/questions/quizzes", json=payload)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
         self.assertIsInstance(res.json(), dict)
         self.assertEqual(res.json().get("status"), 422) 
 
-    def test_get_question_play_w_non_existent_cat(self):
+    def test_quizzes_w_non_existent_cat(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions/play endpoint with the POST method,
+            When I hit the /api/v1/questions/quizzes endpoint with the POST method,
             But a payload with a non existing category ID is used,
             Then I get a 404 response in json format. 
         """
-        NON_EXISTENT_CAT: int = 6 ** 7
-        payload = {"previous_question": 19, "category": NON_EXISTENT_CAT}
-        res = post(f"{BASE_URL}/api/v1/questions/play", json=payload)
+        NON_EXISTENT_CAT = {"id": 6 ** 7}
+        payload = {"previous_questions": 19, "quiz_category": NON_EXISTENT_CAT}
+        res = post(f"{BASE_URL}/api/v1/questions/quizzes", json=payload)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 404)
         self.assertIsInstance(res.json(), dict)

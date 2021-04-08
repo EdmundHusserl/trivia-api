@@ -52,7 +52,12 @@ def create_app(test_config=None):
     @app.after_request
     def after_request(response):
         response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add(
+            "Access-Control-Allow-Origins", 
+            "http://localhost:3000, http://172.25.0.1:3000, http://trivia-frontend:3000"
+        )
         response.headers.add("Access-Control-Allow-Methods", "GET,POST,DELETE")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
         return response
 
     @app.route("/api/v1/categories")
@@ -192,8 +197,8 @@ def create_app(test_config=None):
         else:
             abort(500)
 
-    @app.route("/api/v1/questions/play", methods=["POST"])
-    def get_questions_play():
+    @app.route("/api/v1/questions/quizzes", methods=["POST"])
+    def post_quizzes_questions():
         """
             #TODO: Integration tests
             TEST: In the "List" tab / main screen, clicking on one of the 
@@ -208,34 +213,46 @@ def create_app(test_config=None):
         from random import randint
         try:
             body = request.get_json()
-            category = body.get("category")
-            previous_question = body.get("previous_question")
+            if body is None:
+                raise BadRequest("Cannot process this request as payload is null.")
+            category = body.get("quiz_category") 
+            previous_questions = body.get("previous_questions")  
             
-            if category is None or previous_question is None:
+            if category is None or previous_questions is None:
                 raise UnprocessableEntity(MSG_UNPROCESSABLE.format(
                     params=" - ".join(["category", "previous_question"])
                 ))
-            possible_questions = Question.query.filter(
-                Question.category == int(category)
-            ).all()
+            
+            if category.get("id", 0) == 0:
+                possible_questions = Question.query.all()
+            else:
+                possible_questions = Question.query.filter(
+                    Question.category == int(category.get("id"))
+                ).all()
             
             if not possible_questions:
                 raise NotFound(f"Could find any category with id={category}.")
             
-            random_q_excluding_previous = [el for el in filter(lambda x: x.id != int(previous_question),
-                                                               possible_questions)]
+            random_q_excluding_previous = [
+                el for el in filter(lambda x: x.id not in [q for q in previous_questions],
+                                    possible_questions)
+            ]
+            
             if not len(random_q_excluding_previous):
-                return {}
+                return jsonify({})
             
             idx: int = randint(0, len(random_q_excluding_previous) - 1) 
-            return random_q_excluding_previous[idx].format() 
+            return jsonify(random_q_excluding_previous[idx].format()) 
 
         except UnprocessableEntity as e:
             logging.warning(e.args)
             abort(422, e.args[0] if len(e.args) else None)
         except NotFound as e:
             abort(404, e.args[0] if len(e.args) else None)
-        else:
+        except BadRequest as e:
+            abort(400, e.args[0] if len(e.args) else None)
+        except Exception as e:
+            logging.error(e.args)
             abort(500)
 
     @app.errorhandler(405)

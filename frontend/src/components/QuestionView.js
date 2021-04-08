@@ -4,6 +4,7 @@ import '../stylesheets/App.css';
 import Question from './Question';
 import Search from './Search';
 import $ from 'jquery';
+import { apiUrl } from './config';
 
 class QuestionView extends Component {
   constructor(){
@@ -18,19 +19,40 @@ class QuestionView extends Component {
   }
 
   componentDidMount() {
+    this.categories = this.getCategories();
     this.getQuestions();
   }
 
-  getQuestions = () => {
+  getCategories = () => {
     $.ajax({
-      url: `/questions?page=${this.state.page}`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/categories`,
       type: "GET",
       success: (result) => {
-        this.setState({
-          questions: result.questions,
-          totalQuestions: result.total_questions,
-          categories: result.categories,
-          currentCategory: result.current_category })
+        const categories = {};
+        result.forEach( cat => { categories[cat.id] = cat.type})
+        this.setState({categories: categories})
+        return;
+      },
+      error: (error) => {
+          alert('Unable to load questions. Please try your request again')
+          return;  
+      }
+    })
+  }
+  getQuestions = () => {
+    $.ajax({
+      url: `${apiUrl}/api/v1/questions?page=${this.state.page}`, //TODO: update request URL
+      type: "GET",
+      success: (result) => {
+        this.setState( (prev) => {
+          return { 
+            questions: result,
+            totalQuestions: result.length,
+            currentCategory: (result[result.length - 1] !== undefined) ? 
+              result[result.length - 1].category : prev.currentCategory 
+          }
+        })
+        console.log(this.state.categories)
         return;
       },
       error: (error) => {
@@ -60,13 +82,17 @@ class QuestionView extends Component {
 
   getByCategory= (id) => {
     $.ajax({
-      url: `/categories/${id}/questions`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/categories/${id}/questions`, //TODO: update request URL
       type: "GET",
       success: (result) => {
-        this.setState({
-          questions: result.questions,
-          totalQuestions: result.total_questions,
-          currentCategory: result.current_category })
+        this.setState( (prev) => {
+          return {  
+            questions: result,
+            totalQuestions: result.length,
+            currentCategory: (result.length > 0) ? id : prev.currentCategory
+          }
+        })
+        console.log(this.state)
         return;
       },
       error: (error) => {
@@ -78,20 +104,24 @@ class QuestionView extends Component {
 
   submitSearch = (searchTerm) => {
     $.ajax({
-      url: `/questions`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/questions/search-term`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
-      data: JSON.stringify({searchTerm: searchTerm}),
+      data: JSON.stringify({search_term: searchTerm}),
       xhrFields: {
         withCredentials: true
       },
       crossDomain: true,
       success: (result) => {
-        this.setState({
-          questions: result.questions,
-          totalQuestions: result.total_questions,
-          currentCategory: result.current_category })
+        this.setState( (prev) => {
+          return {
+            questions: result,
+            totalQuestions: result.length,
+            currentCategory: (result[0] !== undefined) ? result[0].category : prev.currentCategory 
+          }
+        })
+        console.log(this.state);
         return;
       },
       error: (error) => {
@@ -105,7 +135,7 @@ class QuestionView extends Component {
     if(action === 'DELETE') {
       if(window.confirm('are you sure you want to delete the question?')) {
         $.ajax({
-          url: `/questions/${id}`, //TODO: update request URL
+          url: `${apiUrl}/api/v1/questions/${id}`, //TODO: update request URL
           type: "DELETE",
           success: (result) => {
             this.getQuestions();
@@ -128,7 +158,7 @@ class QuestionView extends Component {
             {Object.keys(this.state.categories).map((id, ) => (
               <li key={id} onClick={() => {this.getByCategory(id)}}>
                 {this.state.categories[id]}
-                <img className="category" src={`${this.state.categories[id]}.svg`}/>
+                <img className="category" src={`${this.state.categories[id].toLowerCase()}.svg`}/>
               </li>
             ))}
           </ul>
