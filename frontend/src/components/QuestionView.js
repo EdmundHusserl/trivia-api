@@ -19,16 +19,18 @@ class QuestionView extends Component {
   }
 
   componentDidMount() {
+    this.categories = this.getCategories();
     this.getQuestions();
   }
 
-  getCategoryType = (id) => {
+  getCategories = () => {
     $.ajax({
-      url: `${apiUrl}/api/v1/categories/${id}`,
+      url: `${apiUrl}/api/v1/categories`,
       type: "GET",
       success: (result) => {
-        console.log(result)
-        this.setState({currentType: result.type})
+        const categories = {};
+        result.forEach( cat => { categories[cat.id] = cat.type})
+        this.setState({categories: categories})
         return;
       },
       error: (error) => {
@@ -43,22 +45,14 @@ class QuestionView extends Component {
       type: "GET",
       success: (result) => {
         this.setState( (prev) => {
-          const categories = {};
-          result.forEach(question => {
-            this.getCategoryType(question.category);
-            console.log(`currentType: ${this.state.categoryType}`);
-            categories[question.category] = this.state.categoryType;
-          })
-          console.log(categories);
           return { 
             questions: result,
             totalQuestions: result.length,
-            categories: categories,
-            currentCategory: (result[result.length -1] !== undefined) ? 
+            currentCategory: (result[result.length - 1] !== undefined) ? 
               result[result.length - 1].category : prev.currentCategory 
           }
         })
-        console.log(this.state)
+        console.log(this.state.categories)
         return;
       },
       error: (error) => {
@@ -110,7 +104,7 @@ class QuestionView extends Component {
 
   submitSearch = (searchTerm) => {
     $.ajax({
-      url: `${apiUrl}/api/v1/questions`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/questions/search-term`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
@@ -164,7 +158,7 @@ class QuestionView extends Component {
             {Object.keys(this.state.categories).map((id, ) => (
               <li key={id} onClick={() => {this.getByCategory(id)}}>
                 {this.state.categories[id]}
-                <img className="category" src={`${this.state.categories[id]}.svg`}/>
+                <img className="category" src={`${this.state.categories[id].toLowerCase()}.svg`}/>
               </li>
             ))}
           </ul>

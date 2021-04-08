@@ -53,7 +53,7 @@ class QuizView extends Component {
     if(this.state.currentQuestion.id) { previousQuestions.push(this.state.currentQuestion.id) }
 
     $.ajax({
-      url: `${apiUrl}/api/v1/quizzes`, //TODO: update request URL
+      url: `${apiUrl}/api/v1/questions/quizzes`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
@@ -69,9 +69,9 @@ class QuizView extends Component {
         this.setState({
           showAnswer: false,
           previousQuestions: previousQuestions,
-          currentQuestion: result.question,
+          currentQuestion: result,
           guess: '',
-          forceEnd: result.question ? false : true
+          forceEnd: (Object.keys(result).length > 0) ? false : true
         })
         return;
       },
