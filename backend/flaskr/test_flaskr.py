@@ -291,7 +291,7 @@ class TriviaTestCase(TestCase):
             And a properly constructed payload
             Then I get a 200 response in json format.
         """
-        payload = {"previous_questions": 19, "quiz_category": 2}
+        payload = {"previous_questions": [19], "quiz_category": {"id": 2}}
         res = post(f"{BASE_URL}/api/v1/questions/quizzes", json=payload)
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
@@ -310,7 +310,7 @@ class TriviaTestCase(TestCase):
                 (i.e., a payload lacking one of the required fields),
             Then I get a 422 response in json format.
         """
-        payload = {"previous_questions": 19, "quiz_category": None}
+        payload = {"previous_questions": [19], "quiz_category": None}
         res = post(f"{BASE_URL}/api/v1/questions/quizzes", json=payload)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
@@ -324,7 +324,7 @@ class TriviaTestCase(TestCase):
             But a payload with a non existing category ID is used,
             Then I get a 404 response in json format. 
         """
-        NON_EXISTENT_CAT: int = 6 ** 7
+        NON_EXISTENT_CAT = {"id": 6 ** 7}
         payload = {"previous_questions": 19, "quiz_category": NON_EXISTENT_CAT}
         res = post(f"{BASE_URL}/api/v1/questions/quizzes", json=payload)
         self.assertEqual(res.ok, False)
