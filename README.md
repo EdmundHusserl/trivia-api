@@ -1,3 +1,20 @@
+## Dear reviewer:
+
+This project has been dockerized, after I went through the hell of dependency management.
+
+### Getting started:
+
+* Make sure you have downloaded and installed docker in your local machine.
+* Clone this repo and navigate to the root folder.
+* Then Deploy services using docker-compose as follows : 
+> $ docker-compose -f docker-compose up --build --remove-orphans
+* Run unit tests : 
+> source ./backend/run_tests.sh
+* Test your knowledge of science, art, sports, history and entertainment with the Udacity Trivia Game.
+* Enjoy! 
+
+<br />
+
 # Full Stack API Final Project
 
 ## Full Stack Trivia
