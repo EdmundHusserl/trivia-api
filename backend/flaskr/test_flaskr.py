@@ -1,12 +1,12 @@
 from unittest import (
-    TestCase, 
+    TestCase,
     main
 )
 from flask_sqlalchemy import SQLAlchemy
 from requests import (
     get,
     post,
-    delete, 
+    delete,
     put
 )
 from flaskr import create_app
@@ -19,8 +19,7 @@ BODY = {
     "question": "Was Maradona better than Messi?",
     "category": 6,
     "answer": "Yes, since Maradona managed to win the World Cup once, whereas Messi hasn't yet.",
-    "difficulty": 7
-}
+    "difficulty": 7}
 
 
 class TriviaTestCase(TestCase):
@@ -31,11 +30,9 @@ class TriviaTestCase(TestCase):
         self.app = create_app()
         self.client = self.app.test_client
         self.database_name = "trivia_test"
-        self.database_path = "postgresql://{}:{}@{}/{}".format("jorgepl",
-                                                               "admin",
-                                                               "psql_db:5432", 
-                                                               self.database_name)
-        
+        self.database_path = "postgresql://{}:{}@{}/{}".format(
+            "jorgepl", "admin", "psql_db:5432", self.database_name)
+
         setup_db(self.app, self.database_path)
 
         # binds the app to the current context
@@ -44,7 +41,7 @@ class TriviaTestCase(TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
-    
+
     def tearDown(self):
         pass
 
@@ -59,20 +56,20 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), list)
         [self.assertIsInstance(el, dict) for el in res.json()]
-        
+
         # Each occurrence of the returned response presents the following fields:
-        # id, type. 
+        # id, type.
         for el in res.json():
             self.assertEqual(
-                [k for k in filter(lambda k: k in el.keys(), 
-                                   ["id", "type"])], 
+                [k for k in filter(lambda k: k in el.keys(),
+                                   ["id", "type"])],
                 ["id", "type"]
             )
 
     def test_categories_method_not_allowed(self):
         """
             Given a postgresql instance and a flask app both up and running,
-            When I hit the /api/v1/categories endpoint using the 
+            When I hit the /api/v1/categories endpoint using the
                 PUT method (which is not allowed),
             Then I get a 405 response in json format.
         """
@@ -80,21 +77,21 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 405)
         self.assertIsInstance(res.json(), dict)
-        
+
         # The returned response must present the following fields:
         # status, success, message.
         self.assertEqual(
-            [k for k in filter(lambda k: k in res.json(), 
+            [k for k in filter(lambda k: k in res.json(),
                                ["status", "success", "message"])],
             ["status", "success", "message"]
         )
         self.assertEqual(res.json().get("status"), 405)
-                    
+
     def test_get_category_by_id_success(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/categories/<int:id> endpoint using 
-                an existent id and the GET method, 
+            When I hit the /api/v1/categories/<int:id> endpoint using
+                an existent id and the GET method,
             Then I get a 200 response in json format.
         """
         EXISTENT_CAT: int = 1
@@ -102,12 +99,12 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), dict)
-    
+
     def test_get_category_by_id_not_found(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/categories/<int:id> endpoint using 
-                a non-existent id and the GET method, 
+            When I hit the /api/v1/categories/<int:id> endpoint using
+                a non-existent id and the GET method,
             Then I get a 404 response in json format.
         """
         NON_EXISTENT_CAT: int = 27
@@ -116,12 +113,12 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertIsInstance(res.json(), dict)
         self.assertEqual(res.json().get("status"), 404)
-    
+
     def test_get_category_method_not_allowed(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/categories/<int:id> endpoint using 
-                an existing id and the POST method, 
+            When I hit the /api/v1/categories/<int:id> endpoint using
+                an existing id and the POST method,
             Then I get a 405 response in json format.
         """
         res = post(f"{BASE_URL}/api/v1/categories/1")
@@ -133,17 +130,17 @@ class TriviaTestCase(TestCase):
     def test_get_question_success(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions endpoint with the GET method, 
+            When I hit the /api/v1/questions endpoint with the GET method,
             Then I get a 200 response in json format.
         """
         res = get(f"{BASE_URL}/api/v1/questions")
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
-        
+
         data: List[dict] = res.json()
         # Testing pagination works properly
         self.assertEqual(len(data), 10)
-        # Verifying data complies to specs 
+        # Verifying data complies to specs
         for el in res.json():
             self.assertIsInstance(el, dict)
             [self.assertTrue(el.keys().__contains__(k)) for k in QUESTION_KEYS]
@@ -156,7 +153,7 @@ class TriviaTestCase(TestCase):
     def tests_get_questions_method_not_allowed(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions endpoint using 
+            When I hit the /api/v1/questions endpoint using
                 the PUT method (which is not allowed),
             Then I get a 200 response in json format.
         """
@@ -169,7 +166,7 @@ class TriviaTestCase(TestCase):
     def test_post_question(self):
         """
             Given a psql instance and a flask app both up and running,
-            When I hit the /api/v1/questions endpoint with the POST method 
+            When I hit the /api/v1/questions endpoint with the POST method
             And a properly constructed payload is used,
             Then I get a 200 response in json format.
         """
@@ -177,7 +174,8 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 201)
         self.assertIsInstance(res.json(), dict)
-        [self.assertTrue(res.json().keys().__contains__(k)) for k in QUESTION_KEYS]
+        [self.assertTrue(res.json().keys().__contains__(k))
+         for k in QUESTION_KEYS]
         self.assertEqual(res.json().get("question"), BODY.get("question"))
         self.assertEqual(res.json().get("answer"), BODY.get("answer"))
         self.assertEqual(res.json().get("category"), BODY.get("category"))
@@ -190,14 +188,14 @@ class TriviaTestCase(TestCase):
             But a ill-constructed payload is used,
             Then I get a 422 response in json format.
         """
-        
+
         modified_body: dict = BODY
         modified_body["difficulty"] = None
         res = post(f"{BASE_URL}/api/v1/questions", json=modified_body)
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
         self.assertIsInstance(res.json(), dict)
-        self.assertEqual(res.json().get("status"), 422)        
+        self.assertEqual(res.json().get("status"), 422)
 
     def test_get_delete_question_by_id_failure(self):
         """
@@ -205,9 +203,9 @@ class TriviaTestCase(TestCase):
             When I hit the /api/v1/questions endpoint with the GET method,
             But a non-existent id is used,
             Then I get a 404 response in json format.
-            
+
             Similarly,
-            
+
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions endpoint with the DELETE method,
             But a non-existent id is used,
@@ -217,7 +215,8 @@ class TriviaTestCase(TestCase):
         NON_EXISTENT_ID: int = 6 ** 7
         responses = list()
         responses.append(get(f"{BASE_URL}/api/v1/questions/{NON_EXISTENT_ID}"))
-        responses.append(delete(f"{BASE_URL}/api/v1/questions/{NON_EXISTENT_ID}"))
+        responses.append(
+            delete(f"{BASE_URL}/api/v1/questions/{NON_EXISTENT_ID}"))
         for res in responses:
             self.assertEqual(res.ok, False)
             self.assertEqual(res.status_code, 404)
@@ -225,7 +224,7 @@ class TriviaTestCase(TestCase):
             self.assertEqual(res.json().get("status"), 404)
 
     def test_delete_question_success(self):
-        """ 
+        """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions endpoint with the DELETE method,
             And an EXISTENT ID is used,
@@ -233,7 +232,7 @@ class TriviaTestCase(TestCase):
         """
         res = post(f"{BASE_URL}/api/v1/questions", json=BODY)
         new_id = res.json().get("id")
-        res = delete(f"{BASE_URL}/api/v1/questions/{new_id}") 
+        res = delete(f"{BASE_URL}/api/v1/questions/{new_id}")
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 204)
 
@@ -245,7 +244,7 @@ class TriviaTestCase(TestCase):
             Then I get a 500 response in json format.
         """
         #
-        res = post(f"{BASE_URL}/api/v1/questions/search-term") 
+        res = post(f"{BASE_URL}/api/v1/questions/search-term")
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 400)
         self.assertIsInstance(res.json(), dict)
@@ -255,21 +254,23 @@ class TriviaTestCase(TestCase):
         """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions/play endpoint with the POST method,
-            And a properly constructed payload is used 
+            And a properly constructed payload is used
                 (i.e., search_term field is not None),
             Then I get a 200 response in json format.
         """
-        search_term = {"search_term": "Maradona"} 
-        res = post(f"{BASE_URL}/api/v1/questions/search-term", json=search_term) 
+        search_term = {"search_term": "Maradona"}
+        res = post(
+            f"{BASE_URL}/api/v1/questions/search-term",
+            json=search_term)
         self.assertEqual(res.ok, True)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), list)
-        
+
         # I want to make sur that the resource returned presents the following fields:
         # id, question, category, answer, difficulty.
         for el in res.json():
             [self.assertTrue(el.keys().__contains__(k)) for k in QUESTION_KEYS]
-                
+
     def test_quizzes_method_not_allowed(self):
         """
             Given a psql instance and a flask app both up and running,
@@ -277,13 +278,13 @@ class TriviaTestCase(TestCase):
             But a server-side error takes place,
             Then a 405 response is returned in json format.
         """
-        
+
         res = get(f"{BASE_URL}/api/v1/questions/quizzes")
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 405)
         self.assertIsInstance(res.json(), dict)
         self.assertEqual(res.json().get("status"), 405)
-   
+
     def test_quizzes_ok(self):
         """
             Given a psql instance and a flask app both up and running,
@@ -299,14 +300,15 @@ class TriviaTestCase(TestCase):
 
         # I want to make sure that the returned resource presents the following
         # fields: id, question, category, answer, difficulty.
-        
-        [self.assertTrue(res.json().keys().__contains__(el)) for el in QUESTION_KEYS]
+
+        [self.assertTrue(res.json().keys().__contains__(el))
+         for el in QUESTION_KEYS]
 
     def test_quizzes_w_unprocessable_payload(self):
-        """ 
+        """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions/quizzes endpoint with the POST method,
-            But ill-constructed payload is used 
+            But ill-constructed payload is used
                 (i.e., a payload lacking one of the required fields),
             Then I get a 422 response in json format.
         """
@@ -315,14 +317,14 @@ class TriviaTestCase(TestCase):
         self.assertEqual(res.ok, False)
         self.assertEqual(res.status_code, 422)
         self.assertIsInstance(res.json(), dict)
-        self.assertEqual(res.json().get("status"), 422) 
+        self.assertEqual(res.json().get("status"), 422)
 
     def test_quizzes_w_non_existent_cat(self):
         """
             Given a psql instance and a flask app both up and running,
             When I hit the /api/v1/questions/quizzes endpoint with the POST method,
             But a payload with a non existing category ID is used,
-            Then I get a 404 response in json format. 
+            Then I get a 404 response in json format.
         """
         NON_EXISTENT_CAT = {"id": 6 ** 7}
         payload = {"previous_questions": 19, "quiz_category": NON_EXISTENT_CAT}
