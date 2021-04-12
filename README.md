@@ -2,17 +2,75 @@
 
 This project has been dockerized, after I went through the hell of dependency management.
 
-### Getting started:
+### Quickstart using docker-compose (__recommended__)
 
 * Make sure you have downloaded and installed docker in your local machine.
 * Clone this repo and navigate to the root folder.
 * Then Deploy services using docker-compose as follows : 
 > $ docker-compose -f docker-compose up --build --remove-orphans
+* Our project uses the postgres:12 base image to run and initialization script to automatically create and populate the trivia_test database. 
+* The flaskr service (API) will be launched only if the database service is healthy. 
 * Run unit tests : 
 > $ source ./backend/run_tests.sh
-* Take a look at the **documentation** by hitting the **/apidocs** endpoint of the flask/werkzeug server (__http://localhost:5000/apidocs__).
 * Test your knowledge of science, art, sports, history and entertainment with the Udacity Trivia Game App.
 * Enjoy! 
+
+<br />
+
+### Installing dependencies locally
+If you'd rather test locally (or cannot use docker) : 
+* export the following environment variables:
+> #!/bin/bash <br />
+  export FLASK_APP=flaskr <br />
+  export FLASK_ENV=development <br />
+  export FLASK_LOCAL=true
+
+> #On Powershell <br />
+  $Env:FLASK_APP="flaskr" <br />
+  $Env:FLASK_ENV="development" <br />
+  $Env:FLASK_LOCAL=True
+
+* Make sure to have an instance of postgresql up and running on localhost:5432.
+* Initialize the database as follows : 
+> createdb -U jorgepl -E UTF8 trivia_test <br />
+  psql -f ./backend/scripts/trivia.psql trivia_test jorgepl
+
+* Create a virtual environment and install python dependencies :
+> #!/bin/bash
+  python3 -m venv venv <br /> 
+  source venv/bin/activate <br />
+  pip install -r ./backend/requirements.txt <br />
+  flask run
+
+* You can then run the unit tests:
+> python3 -m unittest discover ./backend/flaskr
+
+* Finally, install node dependencies and initialize the frontend server as follows :
+> cd frontend <br />
+  npm i && npm start
+  
+   
+
+## Read The Docs
+* Take a look at the **documentation** by hitting the **/apidocs** endpoint of the flask/werkzeug server (__http://localhost:5000/apidocs__).
+* Too lazy to open a new browser window? Keep reading.
+
+### Categories
+![Screenshot](docs/api_v1_categories_get.PNG)
+![Screenshot](docs/api_v1_categories_get_by_id.PNG)
+
+### Questions
+![Screenshot](docs/api_v1_questions_get.PNG)
+![Screenshot](docs/api_v1_questions_post.PNG)
+![Screenshot](docs/api_v1_questions_post_responses.PNG)
+
+### Using a search-term
+![Screenshot](docs/api_v1_questions_post_search_term.PNG)
+![Screenshot](docs/api_v1_questions_post_search_term_responses.PNG)
+
+### Fetching questions for quizzes
+![Screenshot](docs/api_v1_questions_post_quizzes.PNG)
+![Screenshot](docs/api_v1_questions_post_quizzes_responses.PNG)
 
 <br />
 
