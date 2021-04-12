@@ -1,0 +1,61 @@
+post:
+  summary: Returns a questions based on a previous questions exclusions and category id.
+  consumes:
+    - application/json
+parameters:
+  - name: payload
+    in: body
+    description: A JSON-like object used to pass the query.
+    schema: 
+      type: object
+      required:
+        - previous_questions
+        - quiz_category
+      properties:
+        previous_questions:
+          type: array
+          description: excluded questions id
+          items:
+            type: integer   
+        quiz_category:
+          type: object
+          required:
+            - id 
+          properties:
+            id:
+              type: integer 
+              description: question category id
+            type:
+              type: string
+              description: question category name
+      
+responses:
+  200:
+    description: Existent question not asked yet.
+    schema:
+      id: Question
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Question's id 
+        answer:
+          type: string
+          description: Question's answer
+        question:
+          type: string
+          description: The actual content of the question
+        difficulty:
+          type: integer
+          description: Question's difficulty
+        category:
+          type: integer
+          description: Question's category id 
+  404:
+    description: Not found (Category)
+  405:
+    description: Method not allowed
+  422:
+    description: Unprocessable entity
+  500:
+    description: Internal Server Error

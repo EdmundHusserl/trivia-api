@@ -1,0 +1,53 @@
+post:
+  summary: Creates a new question
+  consumes:
+    - application/json
+parameters:
+  - name: Question
+    in: body
+    description: The question object to create.
+    schema:
+      type: object
+      required:
+        - question
+        - answer
+        - category
+        - difficulty
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        category:
+          type: integer
+        difficulty:
+          type: integer
+responses:
+  201:
+    description: New Trivia Question (created)
+    schema:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Question's id 
+        answer:
+          type: string
+          description: Question's answer
+        question:
+          type: string
+          description: The actual content of the question
+        difficulty:
+          type: integer
+          description: Question's difficulty
+        category:
+          type: integer
+          description: Question's category id 
+  404:
+    description: Not found
+  405:
+    description: Method not allowed
+  422:
+    description: Unprocessable entity
+  500:
+    description: Internal Server Error

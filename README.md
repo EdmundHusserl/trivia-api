@@ -9,8 +9,9 @@ This project has been dockerized, after I went through the hell of dependency ma
 * Then Deploy services using docker-compose as follows : 
 > $ docker-compose -f docker-compose up --build --remove-orphans
 * Run unit tests : 
-> source ./backend/run_tests.sh
-* Test your knowledge of science, art, sports, history and entertainment with the Udacity Trivia Game.
+> $ source ./backend/run_tests.sh
+* Take a look at the **documentation** by hitting the **/apidocs** endpoint of the flask/werkzeug server (__http://localhost:5000/apidocs__).
+* Test your knowledge of science, art, sports, history and entertainment with the Udacity Trivia Game App.
 * Enjoy! 
 
 <br />

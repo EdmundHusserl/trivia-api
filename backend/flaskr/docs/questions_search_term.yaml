@@ -1,0 +1,46 @@
+post:
+  summary: Query for questions using a search term.
+  consumes:
+    - application/json
+parameters:
+  - name: search_term
+    in: body
+    description: A JSON-like object used to pass the query.
+    schema:
+      type: object
+      required:
+        - search_term
+      properties:
+        search_term:
+          type: string
+responses:
+  200:
+    description: A list of questions using the given search term.
+    schema:
+      type: array
+      items:
+        schema:
+          id: Question
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Question's id 
+            answer:
+              type: string
+              description: Question's answer
+            question:
+              type: string
+              description: The actual content of the question
+            difficulty:
+              type: integer
+              description: Question's difficulty
+            category:
+              type: integer
+              description: Question's category id 
+  404:
+    description: Not found
+  405:
+    description: Method not allowed
+  500:
+    description: Internal Server Error

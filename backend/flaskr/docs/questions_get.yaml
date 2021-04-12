@@ -1,0 +1,31 @@
+responses:
+  200:
+    description: Trivia App Questions List
+    schema:
+      type: array
+      items:
+        schema:
+          id: Question
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Question id 
+            answer:
+              type: string
+              description: Question answer
+            question:
+              type: string
+              description: The actual content of the question
+            difficulty:
+              type: integer
+              description: Question difficulty
+            category:
+              type: integer
+              description: Question category id 
+  404:
+    description: Not found
+  405:
+    description: Method not allowed
+  500:
+    description: Internal Server Error

@@ -1,3 +1,4 @@
+from re import S
 from flask import (
     Flask, 
     request, 
@@ -19,6 +20,10 @@ from typing import (
 from dataclasses import dataclass
 import logging
 from .models import setup_db, Question, Category
+from flasgger import (
+    Swagger,
+    swag_from
+)
 
 QUESTIONS_PER_PAGE = 10
 METHOD_NOT_ALLOWED: str = "You cannot use this endpoint to perform a {method} request."
@@ -48,6 +53,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     setup_db(app)
     CORS(app, resources={r"/api/*": {"origins": "*"}})
+    swagger = Swagger(app)
 
     @app.after_request
     def after_request(response):
@@ -61,6 +67,7 @@ def create_app(test_config=None):
         return response
 
     @app.route("/api/v1/categories")
+    @swag_from("docs/categories.yaml")
     def get_categories() -> List[dict]:
         try:
             categories: List[Category] = paginate(
@@ -74,6 +81,7 @@ def create_app(test_config=None):
             abort(500)
     
     @app.route("/api/v1/categories/<int:id>")
+    @swag_from("docs/categories_by_id.yaml")
     def get_category_by_id(id: int) -> dict:
         try:
             cat: Category = Category.query.get(id)
@@ -95,6 +103,8 @@ def create_app(test_config=None):
     number of total questions, current category, categories. 
     """
     @app.route("/api/v1/questions", methods=["GET", "POST"])
+    @swag_from("docs/questions_get.yaml", methods=["GET"])
+    @swag_from("docs/questions_post.yaml", methods=["POST"])
     def get_post_questions() -> List[dict]:
         try:
             if request.method == "GET":
@@ -134,6 +144,8 @@ def create_app(test_config=None):
             abort(500)
 
     @app.route("/api/v1/questions/<int:id>", methods=["GET", "DELETE"])
+    @swag_from("docs/questions_delete.yaml", methods=["DELETE"])
+    @swag_from("docs/questions_id_get.yaml", methods=["GET"])
     def get_delete_question(id: int) -> dict:
 
         try:
@@ -155,6 +167,7 @@ def create_app(test_config=None):
             abort(500)
 
     @app.route("/api/v1/questions/search-term", methods=["POST"])
+    @swag_from("docs/questions_search_term.yaml")
     def get_questions_using_search_term() -> List[dict]:
         """
             #TODO
@@ -198,6 +211,7 @@ def create_app(test_config=None):
             abort(500)
 
     @app.route("/api/v1/questions/quizzes", methods=["POST"])
+    @swag_from("docs/questions_quizzes.yaml")
     def post_quizzes_questions():
         """
             #TODO: Integration tests
@@ -299,5 +313,3 @@ def create_app(test_config=None):
         }), 400
     
     return app
-
-    

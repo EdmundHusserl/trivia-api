@@ -1,0 +1,20 @@
+responses:
+  200:
+    description: List of Available categories.
+    schema:
+      type: array
+      items:
+        schema:
+          id: Category
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Category id
+            type:
+              type: string
+              description: Category name
+  405:
+    description: Method not allowed
+  500:
+    description: Internal Server Error
