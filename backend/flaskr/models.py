@@ -1,12 +1,14 @@
-import os
+from os import getenv
 from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
 import json
 
+db_server_name: str = "psql_db:5432" if getenv("FLASK_LOCAL") is None \
+    else "localhost:5432"
 database_name = "trivia_test"
 database_path = "postgresql://{}:{}@{}/{}".format("jorgepl",
                                                   "admin",
-                                                  'psql_db:5432', 
+                                                  db_server_name,
                                                   database_name)
 
 db = SQLAlchemy()
