@@ -1,8 +1,8 @@
 from re import S
 from flask import (
-    Flask, 
-    request, 
-    abort, 
+    Flask,
+    request,
+    abort,
     jsonify
 )
 from werkzeug.exceptions import (
@@ -38,8 +38,10 @@ class QuestionPayload:
     difficulty: Optional[str] = None
 
     def get_null_fields(self) -> List[str]:
-        problematic_keys = filter(lambda k: k[1] is None, self.__dict__.items())
-        return [el[0] for el in problematic_keys]        
+        problematic_keys = filter(
+            lambda k: k[1] is None,
+            self.__dict__.items())
+        return [el[0] for el in problematic_keys]
 
 
 def paginate(results: Iterable, start_at: int) -> List[object]:
@@ -57,11 +59,12 @@ def create_app(test_config=None):
 
     @app.after_request
     def after_request(response):
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
         response.headers.add(
-            "Access-Control-Allow-Origins", 
-            "http://localhost:3000, http://172.25.0.1:3000, http://trivia-frontend:3000"
-        )
+            "Access-Control-Allow-Headers",
+            "Content-Type,Authorization")
+        response.headers.add(
+            "Access-Control-Allow-Origins",
+            "http://localhost:3000, http://172.25.0.1:3000, http://trivia-frontend:3000")
         response.headers.add("Access-Control-Allow-Methods", "GET,POST,DELETE")
         response.headers.add("Access-Control-Allow-Credentials", "true")
         return response
@@ -79,7 +82,7 @@ def create_app(test_config=None):
             abort(405, METHOD_NOT_ALLOWED.format(request.method))
         else:
             abort(500)
-    
+
     @app.route("/api/v1/categories/<int:id>")
     @swag_from("docs/categories_by_id.yaml")
     def get_category_by_id(id: int) -> dict:
@@ -92,15 +95,15 @@ def create_app(test_config=None):
             abort(404)
         except MethodNotAllowed:
             abort(405)
-        else: 
+        else:
             abort(500)
 
     """
-    @TODO: 
-    Create an endpoint to handle GET requests for questions, 
-    including pagination (every 10 questions). 
-    This endpoint should return a list of questions, 
-    number of total questions, current category, categories. 
+    @TODO:
+    Create an endpoint to handle GET requests for questions,
+    including pagination (every 10 questions).
+    This endpoint should return a list of questions,
+    number of total questions, current category, categories.
     """
     @app.route("/api/v1/questions", methods=["GET", "POST"])
     @swag_from("docs/questions_get.yaml", methods=["GET"])
@@ -113,20 +116,20 @@ def create_app(test_config=None):
                     start_at=request.args.get("page", 1, type=int)
                 )
                 return jsonify([q.format() for q in questions])
-            
+
             if request.method == "POST":
                 req_body = request.get_json()
                 payload = QuestionPayload(req_body.get("question"),
                                           req_body.get("answer"),
                                           req_body.get("category"),
                                           req_body.get("difficulty"))
-                           
+
                 undefined_properties = payload.get_null_fields()
-                
+
                 if undefined_properties:
                     raise UnprocessableEntity(
-                        MSG_UNPROCESSABLE.format(params=" - ".join(undefined_properties))
-                    )
+                        MSG_UNPROCESSABLE.format(
+                            params=" - ".join(undefined_properties)))
                 question = Question(question=payload.question,
                                     answer=payload.answer,
                                     category=payload.category,
@@ -149,8 +152,8 @@ def create_app(test_config=None):
     def get_delete_question(id: int) -> dict:
 
         try:
-            question = Question.query.get(id)    
-            
+            question = Question.query.get(id)
+
             if question is None:
                 raise NotFound()
 
@@ -171,23 +174,24 @@ def create_app(test_config=None):
     def get_questions_using_search_term() -> List[dict]:
         """
             #TODO
-            TEST: Search by any phrase. The questions list will update to include 
-            only question that include that string within their question. 
-            Try using the word "title" to start. 
+            TEST: Search by any phrase. The questions list will update to include
+            only question that include that string within their question.
+            Try using the word "title" to start.
         """
         try:
             payload = request.get_json()
-            search_term = payload.get("search_term") if payload is not None else None
+            search_term = payload.get(
+                "search_term") if payload is not None else None
             logging.debug(f"search_term={search_term}")
             if search_term is None:
                 raise BadRequest()
-            
+
             res: List[Question] = paginate(
-                results=Question.query.filter(Question.question.ilike(f"%{search_term}%")).all(), 
-                start_at=request.args.get("page", 1, type=int)
-            )
+                results=Question.query.filter(
+                    Question.question.ilike(f"%{search_term}%")).all(), start_at=request.args.get(
+                    "page", 1, type=int))
             return jsonify([q.format() for q in res])
-        
+
         except BadRequest:
             abort(400, MSG_UNPROCESSABLE.format(params="search_term"))
         except MethodNotAllowed:
@@ -199,9 +203,9 @@ def create_app(test_config=None):
     def get_questions_by_category(cat_id: int) -> List[dict]:
         try:
             questions: List[Question] = paginate(
-                results=Question.query.filter(Question.category == cat_id).all(),
-                start_at=request.args.get("page", 1, type=int)
-            )
+                results=Question.query.filter(
+                    Question.category == cat_id).all(), start_at=request.args.get(
+                    "page", 1, type=int))
             return jsonify([q.format() for q in questions])
         except NotFound:
             abort(404, f"Could not find a category with id={cat_id}")
@@ -215,48 +219,50 @@ def create_app(test_config=None):
     def post_quizzes_questions():
         """
             #TODO: Integration tests
-            TEST: In the "List" tab / main screen, clicking on one of the 
-            categories in the left column will cause only questions of that 
-            category to be shown. 
+            TEST: In the "List" tab / main screen, clicking on one of the
+            categories in the left column will cause only questions of that
+            category to be shown.
 
             #TODO: Integration tests
             TEST: In the "Play" tab, after a user selects "All" or a category,
             one question at a time is displayed, the user is allowed to answer
-            and shown whether they were correct or not. 
+            and shown whether they were correct or not.
         """
         from random import randint
         try:
             body = request.get_json()
             if body is None:
-                raise BadRequest("Cannot process this request as payload is null.")
-            category = body.get("quiz_category") 
-            previous_questions = body.get("previous_questions")  
-            
+                raise BadRequest(
+                    "Cannot process this request as payload is null.")
+            category = body.get("quiz_category")
+            previous_questions = body.get("previous_questions")
+
             if category is None or previous_questions is None:
                 raise UnprocessableEntity(MSG_UNPROCESSABLE.format(
                     params=" - ".join(["category", "previous_question"])
                 ))
-            
+
             if category.get("id", 0) == 0:
                 possible_questions = Question.query.all()
             else:
                 possible_questions = Question.query.filter(
                     Question.category == int(category.get("id"))
                 ).all()
-            
+
             if not possible_questions:
                 raise NotFound(f"Could find any category with id={category}.")
-            
+
             random_q_excluding_previous = [
-                el for el in filter(lambda x: x.id not in [q for q in previous_questions],
-                                    possible_questions)
-            ]
-            
+                el for el in filter(
+                    lambda x: x.id not in [
+                        q for q in previous_questions],
+                    possible_questions)]
+
             if not len(random_q_excluding_previous):
                 return jsonify({})
-            
-            idx: int = randint(0, len(random_q_excluding_previous) - 1) 
-            return jsonify(random_q_excluding_previous[idx].format()) 
+
+            idx: int = randint(0, len(random_q_excluding_previous) - 1)
+            return jsonify(random_q_excluding_previous[idx].format())
 
         except UnprocessableEntity as e:
             logging.warning(e.args)
@@ -275,16 +281,16 @@ def create_app(test_config=None):
         return jsonify({
             "status": 405,
             "success": False,
-            "message": error.description if error.description else BASIC_MSG 
+            "message": error.description if error.description else BASIC_MSG
         }), 405
-    
+
     @app.errorhandler(500)
     def internal_server_error(error):
         BASIC_MSG = "Internal Server Error"
         return jsonify({
             "status": 500,
             "success": False,
-            "message": error.description if error.description else BASIC_MSG 
+            "message": error.description if error.description else BASIC_MSG
         }), 500
 
     @app.errorhandler(404)
@@ -293,7 +299,7 @@ def create_app(test_config=None):
         return jsonify({
             "status": 404,
             "success": False,
-            "message": error.description if error.description else BASIC_MSG 
+            "message": error.description if error.description else BASIC_MSG
         }), 404
 
     @app.errorhandler(422)
@@ -303,13 +309,13 @@ def create_app(test_config=None):
             "success": False,
             "message": "payload is unprocessable."
         }), 422
-    
+
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({
             "status": 400,
             "success": False,
-            "message": error.description if error.description else "Bad request" 
+            "message": error.description if error.description else "Bad request"
         }), 400
-    
+
     return app
