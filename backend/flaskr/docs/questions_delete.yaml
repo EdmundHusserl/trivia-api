@@ -1,0 +1,17 @@
+delete:
+  summary: Deletes an existent question
+  consumes:
+    - application/json
+parameters:
+  - name: Question id
+    in: path
+    description: The id of the question to delete.
+    schema:
+      type: integer
+responses:
+  204:
+    description: Question deleted (empty response)
+  404:
+    description: Not found
+  500:
+    description: Internal Server Error
