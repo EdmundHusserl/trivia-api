@@ -9,6 +9,7 @@ describe("When I'm on the home page", () => {
     it.only("I can filter question by category", () => {
         categories.forEach( (cat) => {
             cy.contains(cat).click()
+            cy.wait(1000)
             cy.get(".Question-holder img.category").each( ($img) => {
                 expect($img.attr("src"))
                     .to.eql(`${cat.toLowerCase()}.svg`)           
@@ -16,7 +17,7 @@ describe("When I'm on the home page", () => {
         })
     })
 
-    it.only("I can a perform a search by keyword", () => {
+    it.only("I can perform a search by keyword", () => {
         const query: string = "world cup"
         /*
             We're creating here two references:
@@ -69,12 +70,14 @@ describe("When I'm on the home page", () => {
         const queryString = "Anne Rice" 
         // This is a custom cypress method.
         cy.searchByKeyword(queryString)
-        cy.contains(queryString)
-        cy.get(".show-answer.button").click()
-            .then( () => {
-                cy.get(".answer-holder span").then( ($el) => {
-                        expect($el.get(0).style.visibility).to.eql("visible")
+        cy.contains(queryString).then( () => {
+            cy.wait(1000)
+            cy.get(".show-answer.button").click()
+                .then( () => {
+                    cy.get(".answer-holder span").then( ($el) => {
+                            expect($el.get(0).style.visibility).to.eql("visible")
+                    })
                 })
-            })
+        })
     })
 })
